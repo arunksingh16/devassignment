@@ -1,8 +1,9 @@
+# kv create
 data "azurerm_client_config" "current" {}
 
 
 resource "azurerm_key_vault" "kv" {
-  name                = "${var.prefix}kv-thisshdbeunique"
+  name                = "${var.prefix}kv-bbthisisunique"
   location            = "${azurerm_resource_group.rg_main.location}"
   resource_group_name = "${azurerm_resource_group.rg_main.name}"
   enabled_for_disk_encryption = true
@@ -16,13 +17,6 @@ resource "azurerm_key_vault" "kv" {
     tenant_id = "${data.azurerm_client_config.current.tenant_id}"
     object_id = "${data.azurerm_client_config.current.subscription_id}"     
     application_id = "${data.azurerm_client_config.current.client_id}"
-    key_permissions = [
-      "Get",
-      "Create",
-      "Delete",
-      "List",
-      "Update"
-    ]
 
     secret_permissions = [
       "set",
@@ -32,12 +26,24 @@ resource "azurerm_key_vault" "kv" {
       "recover",
       "list",
       "Backup",
-      "Restore",
-
+      "Restore"
     ]
 
-    storage_permissions = [
-      "Get",
+  }
+  access_policy {
+    tenant_id = "${data.azurerm_client_config.current.tenant_id}"
+    object_id = "${data.azurerm_client_config.current.object_id}"     
+    application_id = "${data.azurerm_client_config.current.client_id}"
+
+    secret_permissions = [
+      "set",
+      "get",
+      "delete",
+      "purge",
+      "recover",
+      "list",
+      "Backup",
+      "Restore"
     ]
   }
 }
