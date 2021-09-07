@@ -1,4 +1,6 @@
-
+#############################################################################
+# Module for Windows VM Creation
+#############################################################################
 
 resource "azurerm_windows_virtual_machine" "winvm-1" {
   name                = "${var.prefix}-win-1"

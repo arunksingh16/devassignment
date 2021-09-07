@@ -1,3 +1,7 @@
+#############################################################################
+# Module for SA Creation
+#############################################################################
+
 resource "azurerm_storage_account" "saccnt" {
   name                     = "${var.prefix}thisshdbeunique"
   location            = "${azurerm_resource_group.rg_main.location}"
