@@ -74,3 +74,6 @@ As similar to above Azure DevOps environment and deployment is used to prepare a
 5) The deployments to QA and Prod should be enabled with Approvals from approvers only
 
 Azure DevOps environment and deployment is used to prepare deployment stages. Using Azure DevOps environment you can control the approval process and other required checks. Those checks are not part of YAML pipeline and need to be configured using Azure DevOps UI.
+
+
+*** Please note as per recent update on Azure DevOps Services, Environment need to be created first in the system ***

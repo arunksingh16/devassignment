@@ -60,3 +60,5 @@ There are files with `.tf` extention in this repository. Which will deploy above
   both methods have its own pros/cons. 
 
 
+
+*** Please note as per recent update on Azure DevOps Services, Environment need to be created first in the system ***
