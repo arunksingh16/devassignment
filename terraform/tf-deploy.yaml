@@ -1,0 +1,148 @@
+# trigger is none so it will not execute automatically
+trigger: none
+
+name: Terraform-${{ parameters.actionToPerform }}-${{ parameters.envName }}-$(Build.SourceBranch)
+
+pool:
+  vmImage: ubuntu-latest
+
+
+variables:
+  - name: isMain
+    value: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
+  - group: GENERIC
+  # THE VARIABLE GROUP CONTAINS SECRET DATA SPECIFIC TO AZURE like AZURE-SUBCRIPTION
+  - ${{ if eq(parameters.envName, 'DEV') }}:
+    - group: DEV-DATA
+  - ${{ if eq(parameters.envName, 'PRD') }}:
+    - group: PRD-DATA   
+
+
+# USING PARAMS I AM CONTROLLING THE DEPLOYMENT IN EACH ENVIRONMENT. 
+parameters:
+  - name: envName
+    displayName: Select Environment
+    default: DEV
+    values:
+      - DEV
+      - PRD
+
+  - name: actionToPerform
+    displayName: Deploy/Destroy
+    default: Deploy
+    values:
+      - Deploy
+      - Destroy
+
+stages:
+  - stage: TERRAFORM_RUN
+    condition: and(eq('${{ parameters.actionToPerform }}', 'Deploy'), eq(variables.isMain, true)) 
+    displayName: TERRAFORM_RUN
+    jobs:
+    - deployment: TF_DEP
+      displayName: Deployment Using Terraform
+      timeoutInMinutes: 30
+      environment: '${{ parameters.envName }}'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - checkout: self
+
+            - task: TerraformInstaller@0
+              inputs:
+                terraformVersion: '1.0.2'
+
+            - task: TerraformTaskV2@2
+              displayName: Terraform Init
+              inputs:
+                provider: 'azurerm'
+                command: 'init'
+                workingDirectory: '$(System.DefaultWorkingDirectory)/terraform'
+                backendServiceArm: '$(AZURE-SUBCRIPTION)'
+                backendAzureRmResourceGroupName: '$(AZURE-RG)'
+                backendAzureRmStorageAccountName: '$(AZURE-SA)'
+                backendAzureRmContainerName: 'terraform'
+                backendAzureRmKey: '${{ parameters.envName }}.vnet.terraform.tfstate'
+
+
+            - task: TerraformTaskV2@2
+              displayName: Terraform Plan
+              inputs:
+                provider: 'azurerm'
+                command: 'plan'
+                workingDirectory: '$(System.DefaultWorkingDirectory)/terraform'
+                commandOptions: '-out ${{ parameters.envName }}.tfplan'
+                environmentServiceNameAzureRM: '$(AZURE-SUBCRIPTION)'
+
+            - task: TerraformTaskV2@2
+              displayName: Terraform Apply
+              inputs:
+                provider: 'azurerm'
+                command: 'apply'
+                workingDirectory: '$(System.DefaultWorkingDirectory)/terraform'
+                commandOptions: '-auto-approve ${{ parameters.envName }}.tfplan'
+                environmentServiceNameAzureRM: '$(AZURE-SUBCRIPTION)'
+
+            - task: Bash@3
+              displayName: list
+              inputs:
+                targetType: 'inline'
+                script: |
+                  cd $(System.DefaultWorkingDirectory)/terraform
+                  pwd
+                  ls -latr
+
+            - task: PublishPipelineArtifact@1
+              inputs:
+                targetPath: '$(System.DefaultWorkingDirectory)/terraform/${{ parameters.envName }}.tfplan'
+                artifact: 'tfplan-vnet'
+                publishLocation: 'pipeline'
+
+  - stage: TERRAFORM_DESTROY 
+    condition: and(eq('${{ parameters.actionToPerform }}', 'Destroy'), eq(variables.isMain, true))
+    displayName: TERRAFORM_DESTROY
+    jobs:
+    - deployment: Remove_VNET
+      displayName: Destroy Using Terraform
+      timeoutInMinutes: 30
+      environment: '${{ parameters.envName }}'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - checkout: self
+
+            - task: TerraformInstaller@0
+              inputs:
+                terraformVersion: '1.0.2'
+
+            - task: TerraformTaskV2@2
+              displayName: Terraform Init
+              inputs:
+                provider: 'azurerm'
+                command: 'init'
+                workingDirectory: '$(System.DefaultWorkingDirectory)/terraform'
+                backendServiceArm: '$(AZURE-SUBCRIPTION)'
+                backendAzureRmResourceGroupName: '$(AZURE-RG)'
+                backendAzureRmStorageAccountName: '$(AZURE-SA)'
+                backendAzureRmContainerName: 'terraform'
+                backendAzureRmKey: '${{ parameters.envName }}.vnet.terraform.tfstate'
+
+            - task: TerraformTaskV2@2
+              displayName: Terraform Plan -Destroy
+              inputs:
+                provider: 'azurerm'
+                command: 'plan'
+                workingDirectory: '$(System.DefaultWorkingDirectory)/terraform'
+                commandOptions: '-destroy -out ${{ parameters.envName }}.destroy.tfplan'
+                environmentServiceNameAzureRM: '$(AZURE-SUBCRIPTION)'
+
+            - task: TerraformTaskV2@2
+              displayName: Terraform Apply -Destroy
+              inputs:
+                provider: 'azurerm'
+                command: 'apply'
+                workingDirectory: '$(System.DefaultWorkingDirectory)/terraform'
+                commandOptions: '-destroy -auto-approve ${{ parameters.envName }}.destroy.tfplan'
+                environmentServiceNameAzureRM: '$(AZURE-SUBCRIPTION)'
