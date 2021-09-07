@@ -1,10 +1,3 @@
-# devassignment
-This repository is for solving DevOps chanllenges. 
-
-### Solution for Question 1
-
-
-
 #### Solution for Question 2
 Terraform based deployment to support following Azure Infra components -
 - Azure VNet 
