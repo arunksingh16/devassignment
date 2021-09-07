@@ -8,7 +8,6 @@ terraform {
         storage_account_name = "tfstorageaccnt"
         container_name       = "terraform"
         key                  = "dev.vnet.terraform.tfstate"
-        subscription_id      = "${var.ARM_SUBSCRIPTION_ID}"
     }
   required_providers {
     azurerm = {
