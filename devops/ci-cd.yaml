@@ -6,32 +6,18 @@ trigger: none
   branches:
     include:
       - master
-# parameters to control build/deployment
-parameters:
-- name: 'BuildApp'
-  displayName: 'Build App'
-  default: false
-  type: boolean
 
-- name: 'DeployApp'
-  displayName: 'Deploy App'
-  default: false
-  type: boolean
 
 variables:
   - name: isMainBranch
     value: $[eq(variables['Build.SourceBranch'], 'refs/heads/master')]
-  - name: isReleaseBranch
-    value: $[startsWith(variables['Build.SourceBranch'], 'refs/heads/releases/')]
-  - name: isFeatureBranch
-    value: $[startsWith(variables['Build.SourceBranch'], 'refs/heads/features/')]
   - name: BuildPackage
     value: $(Build.BuildNumber)
 
 
 stages:
 - stage: Build
-  condition: eq('${{ parameters.BuildApp }}', true)
+  condition: and(eq(variables.isMainBranch, true), succeeded())
   variables:
   - name: solution
     value: '**/appbuild.sln'
@@ -149,8 +135,8 @@ stages:
     #########################################
 
 
-- stage: Deployment
-  condition: and(eq(variables.isMainBranch, true), eq('${{ parameters.DeployApp }}', 'True'))
+- stage: DEV_DEPLOYMENT
+  condition: and(eq(variables.isMainBranch, true), succeeded())
   jobs :
   - deployment: App_Deployment
     displayName: Deploy Application
@@ -179,3 +165,83 @@ stages:
                   destinationFolder: '$(System.DefaultWorkingDirectory)/webproject/'
                   cleanDestinationFolder: true
                   overwriteExistingFiles: false
+
+    #########################################
+
+    # perform deployment here on target system
+    
+    #########################################
+
+- stage: QA_DEPLOYMENT
+  condition: and(eq(variables.isMainBranch, true), succeeded())
+  jobs :
+  - deployment: App_Deployment
+    displayName: Deploy Application
+    pool:
+      name: MS-POOL
+    environment: 'QA'
+    workspace:
+         clean: all
+    strategy:
+       # simplest deployment strategy I am using
+        runOnce:
+          deploy:
+            steps:    
+            - checkout: none
+            - task: DownloadBuildArtifacts@0
+              displayName: Download artifacts
+              inputs:
+                buildType: 'current'
+                downloadType: 'single'
+                artifactName: 'webproject'
+                downloadPath: '$(Agent.BuildDirectory)/webproject'
+
+            - task: ExtractFiles@1
+              inputs:
+                  archiveFilePatterns: '$(Agent.BuildDirectory)/webproject/webproject-$(Build.BuildNumber).zip'
+                  destinationFolder: '$(System.DefaultWorkingDirectory)/webproject/'
+                  cleanDestinationFolder: true
+                  overwriteExistingFiles: false
+
+    #########################################
+
+    # perform deployment here on target system
+    
+    #########################################
+
+- stage: PRD_DEPLOYMENT
+  condition: and(eq(variables.isMainBranch, true), succeeded())
+  jobs :
+  - deployment: App_Deployment
+    displayName: Deploy Application
+    pool:
+      name: MS-POOL
+    environment: 'PRD'
+    workspace:
+         clean: all
+    strategy:
+       # simplest deployment strategy I am using
+        runOnce:
+          deploy:
+            steps:    
+            - checkout: none
+            - task: DownloadBuildArtifacts@0
+              displayName: Download artifacts
+              inputs:
+                buildType: 'current'
+                downloadType: 'single'
+                artifactName: 'webproject'
+                downloadPath: '$(Agent.BuildDirectory)/webproject'
+
+            - task: ExtractFiles@1
+              inputs:
+                  archiveFilePatterns: '$(Agent.BuildDirectory)/webproject/webproject-$(Build.BuildNumber).zip'
+                  destinationFolder: '$(System.DefaultWorkingDirectory)/webproject/'
+                  cleanDestinationFolder: true
+                  overwriteExistingFiles: false
+
+    #########################################
+
+    # perform deployment here on target system
+    
+    #########################################
