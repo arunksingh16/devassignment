@@ -23,18 +23,18 @@ The deployment is completely automated using Azure DevOps Pipeline.
 
 Terraform `Azurerm` for backend where `tf state` will be stored. I am using Azure Blob container for same. 
 So before proceeding for tf setup, I created a SA and Blob container using cli. 
-To access the container while tf executes, there are multiple ways to use. I am using simplest possible using the Azure CLI or a Service Principal.
+To access the container while tf executes, there are multiple ways. I am using simplest possible way, the Azure CLI or a Service Principal.
 
 
 2) List the tools you will to create and store the Terraform templates.
 
-I am cretaed a structure for this deployment. I kept Azure resources in seperate files for better management. The templates will be uploaded to git based repository so that devops pipeline can access the same.
+I have cretaed a structure for this deployment. I kept Azure resources in seperate files for better management. The templates will be uploaded to git based repository so that devops pipeline can access the same. The terrform state is being stored in azure blob.
 
 
 3) Explain the process and steps to create automated deployment pipeline.
 
-Azure DevOps pipeline will be prepared to execute terraform based deployment. There is a extention available at `Visual Studio Market Place` specifically for terraform. We need to deploy the same so that we can utilise it for tf deployment. The extention is pretty simple and will need Service Connection to access azure resources.
-Pipeline will have 3 main steps primarily - `terraform init` -> `terraform plan` -> `terraform `
+Azure DevOps pipeline will be prepared to execute terraform based deployment. There is a extention available at `Visual Studio Market Place` specifically for terraform. We need to deploy the same on build agents so that we can utilise it for tf deployment. The extention is pretty simple and will need Service Connection to access azure resources.
+Pipeline will have 3 main steps primarily - `terraform init` -> `terraform plan` -> `terraform apply`
 
 Please note, I have added one more controlled stage for destroy as well. 
 
