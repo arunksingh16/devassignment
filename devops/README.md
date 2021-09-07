@@ -1,6 +1,6 @@
 ### Solution for Question 1
 
-Azure DevOps pipeline to support CI/CD deployment. Please have a look on ci-cd.yaml for more details. I do not have any app ready by I considered following structure of our app for this pipeline
+Azure DevOps pipeline to support CI/CD deployment. Please have a look on ci-cd.yaml for more details. I do not have time to prepare a dummy app so I assumed few things for this deployment like structure of our app etc.
 
 ```
 - app
@@ -46,11 +46,11 @@ By default any of task fails then Azure DevOps stage will fail as well.
 ```
 
 3) The deployment of code and artifacts should be automated to Dev environment.
-Azure DevOps deployment is used to utilise concept of Azure DevOps Environments. The Dev Stage will proceed once build is successful.
+The Dev Stage will proceed once build is successful.
 
 ```
 - stage: Deployment
-  condition: and(eq(variables.isMainBranch, true), eq('${{ parameters.DeployApp }}', 'True'))
+  condition: and(eq(variables.isMainBranch, true), succeeded())
   jobs :
   - deployment: App_Deployment
     displayName: Deploy Application
@@ -68,9 +68,9 @@ Azure DevOps deployment is used to utilise concept of Azure DevOps Environments.
 
 4) Upon successful deployment to the Dev environment, deployment should be easily promoted to QA and Prod through automated process.
 
-As similar to above Azure DevOps environment and deployment is used for further deployment. 
+As similar to above Azure DevOps environment and deployment is used to prepare all env stages. The release will progress through stages on successful completion of previous stage
 
 
 5) The deployments to QA and Prod should be enabled with Approvals from approvers only
 
-Azure DevOps environment and deployment is used for further deployment. But using Azure DevOps environment you can control the approval process and other required checks. Those checks are not part of YAML pipeline and need to be configured using Azure DevOps UI.
+Azure DevOps environment and deployment is used to prepare deployment stages. Using Azure DevOps environment you can control the approval process and other required checks. Those checks are not part of YAML pipeline and need to be configured using Azure DevOps UI.
